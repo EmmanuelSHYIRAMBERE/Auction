@@ -1,0 +1,356 @@
+openapi: 3.0.0
+info:
+  title: Auction Management API
+  description: API for managing Auction resources
+  version: 1.0.0
+servers:
+  - url: "http://localhost:5000"
+    description: Local development server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Users:
+      type: object
+      required:
+        - username
+        - lastname
+        - email
+        - password
+        - location
+      properties:
+        username:
+          type: string
+        lastname:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        location:
+          type: string
+      example:
+        username: "john_doe"
+        lastname: "Doe123"
+        email: "john.doe@example.com"
+        password: "******************"
+        location: "Locat123"
+
+    updateUser:
+      type: object
+      properties:
+        username:
+          type: string
+        lastname:
+          type: string
+        email:
+          type: string
+          format: email
+        location:
+          type: string
+        photo:
+          type: string
+          format: binary
+      example:
+        username: "john_doe"
+        lastname: "Doe123"
+        email: "john.doe@example.com"
+        location: "Locat123"
+        photo: photo.jpg
+
+    Auth:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      example:
+        email: "email@example.com"
+        password: "******************"
+
+    ChangePassword:
+      type: object
+      required:
+        - existingPassword
+        - newPassword
+      properties:
+        existingPassword:
+          type: string
+        newPassword:
+          type: string
+      example:
+        existingPassword: "******************"
+        newPassword: "******************"
+
+    ForgotPassword:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+      example:
+        email: "email@example.com"
+
+    ResetPassword:
+      type: object
+      required:
+        - email
+        - otp
+        - newPassword
+      properties:
+        email:
+          type: string
+        otp:
+          type: string
+        newPassword:
+          type: string
+      example:
+        email: "email@example.com"
+        otp: "------"
+        newPassword: "******************"
+
+tags:
+  - name: userManagement
+    description: The user managing API
+  - name: authManagement
+    description: The auth managing API
+
+paths:
+  /api/v1/users:
+    post:
+      summary: Register a new user
+      tags: [userManagement]
+      description: Endpoint to register a new user to the system
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Users"
+      responses:
+        "200":
+          description: User added successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Users"
+        "401":
+          description: Unauthorized, authentication error
+        "500":
+          description: Internal server error
+
+    get:
+      summary: Get all Users
+      tags: [userManagement]
+      description: Endpoint to retrieve all Users
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Users"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
+
+  /api/v1/users/{id}:
+    get:
+      summary: Get a User by ID
+      tags: [userManagement]
+      description: Endpoint to retrieve a User by its ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The User id
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Users"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: User not found
+
+    delete:
+      summary: Delete a User by ID
+      tags: [userManagement]
+      description: Endpoint to delete a User by its ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The User id
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Users"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
+
+    put:
+      summary: Update a User by ID
+      tags: [userManagement]
+      description: Endpoint to update a User by its ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The User id
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/updateUser"
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/updateUser"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
+
+  /api/v1/auth:
+    post:
+      summary: Login to your account
+      tags: [authManagement]
+      description: Endpoint to log user in the system
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Auth"
+      responses:
+        "200":
+          description: User logged in successfully
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
+
+  /api/v1/auth/logout:
+    post:
+      summary: Logout from your account
+      tags: [authManagement]
+      description: Endpoint to log user out the system
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: User logged out successfully
+        "500":
+          description: Internal server error
+
+  /api/v1/auth/changepassword:
+    post:
+      summary: Change password
+      tags: [authManagement]
+      description: Endpoint to change user's password
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePassword"
+      responses:
+        "200":
+          description: User changed password successfully
+        "401":
+          description: Password does match
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
+
+  /api/v1/auth/forgotpassword:
+    post:
+      summary: Forgot password
+      tags: [authManagement]
+      description: Endpoint for user who forgot password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPassword"
+      responses:
+        "200":
+          description: Password otp generated successfully
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
+
+  /api/v1/auth/resetpassword:
+    post:
+      summary: Rest password
+      tags: [authManagement]
+      description: Endpoint for user to reset password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPassword"
+      responses:
+        "200":
+          description: Password otp generated successfully
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
