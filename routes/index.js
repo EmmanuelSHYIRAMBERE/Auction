@@ -8,6 +8,7 @@ import userRouter from "./user.route";
 import contactRouter from "./contact.route";
 import subscriptionRouter from "./subscription.route";
 import donationRouter from "./donation.route";
+import paymentRouter from "./payment.route";
 
 const apiRouter = express.Router();
 
@@ -19,6 +20,7 @@ apiRouter.use("/subscriptions", subscriptionRouter);
 apiRouter.use(refreshAccessToken);
 
 apiRouter.use("/donations", donationRouter);
+apiRouter.use("/payments", paymentRouter);
 
 apiRouter.all("*", (req, res, next) => {
   next(

@@ -1,40 +1,60 @@
-import Payment from "../models/payment.model";
-import User from "../models/user.model";
-import errorHandler, { catchAsyncError } from "../utils/errorhandler.utility";
+import Stripe from "stripe";
+import dotenv from "dotenv";
+import errorHandler, { catchAsyncError } from "../utils/errorhandler.utlity";
 import { paymentsValidationSchema } from "../validation/data.validation";
+import User from "../models/user.model";
+import Donation from "../models/donation.model";
+import Payment from "../models/payment.model";
+
+dotenv.config();
+
+const stripe = new Stripe(process.env.stripeSecret);
 
 export const createPayment = catchAsyncError(async (req, res, next) => {
-  const userId = req.user._id;
-
-  const { error } = paymentsValidationSchema.validate(req.body, {
-    abortEarly: false,
-  });
-
-  if (error) {
-    const errorMessage = error.details.map((err) => err.message).join(", ");
-    return next(new errorHandler(errorMessage, 400));
-  }
-
-  const user = await User.findById(userId);
-
-  if (!user) {
-    return next(new errorHandler(`User not found`, 404));
-  }
-
-  const { firstname, lastname, email, amount } = user;
-
-  const customer = await stripe.customers.create({
-    email: email,
-    name: firstname + " " + lastname,
-  });
-
-  req.body.firstname = firstname;
-  req.body.lastname = lastname;
-
-  const { card_Name, card_ExpYear, card_ExpMonth, card_CVC, card_Number } =
-    req.body;
-
   try {
+    const email = req.user.email;
+    const donationId = req.params.id;
+
+    const user = await User.findOne({ email: email });
+
+    if (!user) {
+      return next(new errorHandler(`User not found`, 404));
+    }
+
+    const { firstname, lastname } = user;
+
+    req.body.firstname = firstname;
+    req.body.lastname = lastname;
+    req.body.email = email;
+
+    const { error } = paymentsValidationSchema.validate(req.body, {
+      abortEarly: false,
+    });
+
+    if (error) {
+      const errorMessage = error.details.map((err) => err.message).join(", ");
+      return next(new errorHandler(errorMessage, 400));
+    }
+
+    const donation = await Donation.findById(donationId);
+
+    if (!donation) {
+      return next(new errorHandler(`Donation not found`, 404));
+    }
+
+    const { amount } = donation;
+
+    const customer = await stripe.customers.create({
+      email: email,
+      name: firstname + " " + lastname,
+    });
+
+    req.body.firstname = firstname;
+    req.body.lastname = lastname;
+
+    const { card_Name, card_ExpYear, card_ExpMonth, card_CVC, card_Number } =
+      req.body;
+
     const card_token = await stripe.tokens.create({
       card: {
         name: card_Name,
@@ -52,7 +72,7 @@ export const createPayment = catchAsyncError(async (req, res, next) => {
 
     const paymentMade = await stripe.charges.create({
       receipt_email: email,
-      amount: parseInt(Math.round(totalAmount)),
+      amount: parseInt(Math.round(amount)) * 1000,
       currency: "RWF",
       card: card.id,
       customer: customer.id,
@@ -61,13 +81,12 @@ export const createPayment = catchAsyncError(async (req, res, next) => {
     user.customer_id = customer.id;
     user.card_id = card.id;
     user.receipt_id = paymentMade.id;
-    user.role = "customer";
+    user.role = "donator";
 
     await user.save();
 
     const paymentData = {
       success: true,
-      itemsPaid: itemCount,
       paymentMade: {
         id: paymentMade.id,
         amount: paymentMade.amount,
@@ -78,36 +97,18 @@ export const createPayment = catchAsyncError(async (req, res, next) => {
         status: paymentMade.status,
       },
       user: {
-        _id: user._id,
-        email: user.email,
-        fullNames: user.fullNames,
-        phoneNo: user.phoneNo,
-        location: user.location,
-        role: user.role,
+        email: email,
+        fullNames: firstname + " " + lastname,
       },
     };
 
-    const paymentDetails = {
-      items: itemCount,
-      amount: paymentMade.amount,
-      currency: paymentMade.currency,
-      payment_method: paymentMade.payment_method_details.type,
-    };
+    const newPayment = await Payment.create(req.body);
 
-    paymentRequestConfirmationEmail(email, user.fullNames, paymentDetails);
-
-    res.status(201).json(paymentData);
+    res.status(201).json(newPayment);
   } catch (error) {
-    console.error(error);
+    console.error("Error in createPayment:", error);
     res.status(500).json({ success: false, msg: error.message });
   }
-
-  const newPayment = await Payment.create(req.body);
-
-  res.status(201).json({
-    message: "Payment created successfully.",
-    payment: newPayment,
-  });
 });
 
 export const getPaymentById = catchAsyncError(async (req, res, next) => {

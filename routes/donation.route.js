@@ -6,7 +6,7 @@ import {
   deleteDonation,
   getAllDonations,
 } from "../controllers/donation.controller";
-import { admin, refreshAccessToken, verifyAccessToken } from "../middleware";
+import { admin, verifyAccessToken } from "../middleware";
 
 const donationRouter = express.Router();
 

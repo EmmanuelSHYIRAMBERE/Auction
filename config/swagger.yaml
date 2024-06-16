@@ -170,6 +170,34 @@ components:
       example:
         amount: 100
 
+    Payment:
+      type: object
+      required:
+        - card_Name
+        - card_ExpYear
+        - card_ExpMonth
+        - card_CVC
+        - card_Number
+      properties:
+        card_Name:
+          type: string
+        card_ExpYear:
+          type: integer
+          format: int32
+        card_ExpMonth:
+          type: integer
+          format: int32
+        card_CVC:
+          type: string
+        card_Number:
+          type: string
+      example:
+        card_Name: "John Doe"
+        card_ExpYear: 2024
+        card_ExpMonth: "12"
+        card_CVC: "123"
+        card_Number: 4242424242424242
+
 tags:
   - name: userManagement
     description: The user managing API
@@ -181,6 +209,8 @@ tags:
     description: The subscription managing API
   - name: donationManagement
     description: The donation managing API
+  - name: paymentManagement
+    description: The payment managing API
 
 paths:
   /api/v1/users:
@@ -812,5 +842,114 @@ paths:
           description: Unauthorized, authentication error
         "404":
           description: Donation not found
+        "500":
+          description: Internal server error
+
+  /api/v1/payments:
+    get:
+      summary: Get all payments
+      tags: [paymentManagement]
+      description: Endpoint to retrieve all payments
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Payments not found
+
+  /api/v1/payments/{id}:
+    post:
+      summary: Create a new payment
+      tags: [paymentManagement]
+      description: Endpoint to create a new payment
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The donation id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Payment"
+      responses:
+        "201":
+          description: Payment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized, authentication error
+        "500":
+          description: Internal server error
+
+    get:
+      summary: Get a payment by ID
+      tags: [paymentManagement]
+      description: Endpoint to retrieve a payment by its ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The payment id
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Payment not found
+        "500":
+          description: Internal server error
+
+    delete:
+      summary: Delete a payment by ID
+      tags: [paymentManagement]
+      description: Endpoint to delete a payment by its ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The payment id
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Payment not found
         "500":
           description: Internal server error

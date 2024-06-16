@@ -8,7 +8,7 @@ export const usersValidationSchema = Joi.object({
   email: Joi.string().email().required(),
   location: Joi.string().required(),
   password: Joi.string().min(6).required(),
-  role: Joi.string().valid("admin", "user").default("user"),
+  role: Joi.string().valid("admin", "donator", "user").default("user"),
 });
 
 export const contactsValidationSchema = Joi.object({
@@ -35,7 +35,10 @@ export const subscriptionsValidationSchema = Joi.object({
 export const paymentsValidationSchema = Joi.object({
   firstname: Joi.string().required(),
   lastname: Joi.string().required(),
-  cardNumber: Joi.string().required(),
-  cvc: Joi.string().required(),
-  bankName: Joi.string().required(),
+  email: Joi.string().email().required(),
+  card_Name: Joi.string().required(),
+  card_Number: Joi.number().required(),
+  card_CVC: Joi.string().required(),
+  card_ExpYear: Joi.number().required(),
+  card_ExpMonth: Joi.string().required(),
 });

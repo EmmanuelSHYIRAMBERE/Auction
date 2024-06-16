@@ -10,8 +10,6 @@ export const createDonation = catchAsyncError(async (req, res, next) => {
     _id: userId,
   });
 
-  console.log("user:---", user);
-
   if (!user) {
     return next(new errorHandler(`User not found.`, 404));
   }
