@@ -4,6 +4,8 @@ info:
   description: API for managing Auction resources
   version: 1.0.0
 servers:
+  - url: "https://auction-website-auji.onrender.com"
+    description: Deployed development server
   - url: "http://localhost:5000"
     description: Local development server
 
