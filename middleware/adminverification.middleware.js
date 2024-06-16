@@ -7,22 +7,14 @@ export const admin = catchAsyncError(async (req, res, next) => {
   const user = await User.findById(userId);
   if (!user) {
     return next(
-      new errorHandler({
-        message: "Login again, your session might be ended!",
-        statusCode: 404,
-      })
+      new errorHandler("Login again, your session might be ended!", 404)
     );
   }
 
   const role = user.role;
 
   if (role !== "admin") {
-    return next(
-      new errorHandler({
-        message: "You are not authorized!",
-        statusCode: 403,
-      })
-    );
+    return next(new errorHandler("You are not authorized!", 403));
   }
 
   next();

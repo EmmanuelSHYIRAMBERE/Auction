@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import { Schema } from "mongoose";
 
 export const generateAccessToken = (data) => {
   const accessToken = jwt.sign(data, process.env.ACCESS_TOKEN_SECRET_KEY, {

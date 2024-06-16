@@ -1,8 +1,6 @@
-import { NextFunction, Request, Response } from "express";
 import crypto from "crypto";
-
 import User from "../models/user.model";
-import errorHandler, { catchAsyncError } from "../utils/errorhandler.utlity";
+import ErrorHandler, { catchAsyncError } from "../utils/errorhandler.utlity";
 import { comparePassword, hashPassword } from "../utils/password.utility";
 import {
   generateAccessToken,
@@ -13,34 +11,22 @@ export const logIn = catchAsyncError(async (req, res, next) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
-    return next(
-      new errorHandler({
-        message: "Please provide username and password",
-        statusCode: 400,
-      })
-    );
+    return next(new ErrorHandler("Please provide username and password", 400));
   }
 
-  const user = await User.findOne({ username: username });
+  const user = await User.findOne({ username });
 
   if (!user) {
-    return next(
-      new errorHandler({ message: `User not found`, statusCode: 404 })
-    );
+    return next(new ErrorHandler("User not found", 404));
   }
 
-  let isPwdMatch = await comparePassword(req.body.password, user.password);
+  const isPwdMatch = await comparePassword(password, user.password);
 
   if (!isPwdMatch) {
-    return next(
-      new errorHandler({
-        message: `Incorrect password. Please try again.`,
-        statusCode: 401,
-      })
-    );
+    return next(new ErrorHandler("Incorrect password. Please try again.", 401));
   }
 
-  const { _id, location, role } = user;
+  const { _id, email, location, role, photo } = user;
 
   const accessToken = generateAccessToken({ _id, email });
   const refreshToken = generateRefreshToken({ _id, email });
@@ -57,11 +43,11 @@ export const logIn = catchAsyncError(async (req, res, next) => {
     access_token: accessToken,
     user: {
       userId: _id,
-      email: email,
-      username: username,
-      location: location,
-      photo: photo,
-      role: role,
+      email,
+      username,
+      location,
+      photo,
+      role,
     },
   });
 });
@@ -72,23 +58,16 @@ export const changePassword = catchAsyncError(async (req, res, next) => {
   const user = await User.findOne({ email: req.user.email });
 
   if (!user) {
-    return next(
-      new errorHandler({ message: "Please log in first!", statusCode: 400 })
-    );
+    return next(new ErrorHandler("Please log in first!", 400));
   }
 
-  let pwdCheck = await comparePassword(existingPassword, user.password);
+  const pwdCheck = await comparePassword(existingPassword, user.password);
 
   if (!pwdCheck) {
-    return next(
-      new errorHandler({
-        message: "Incorrect password. Please try again.",
-        statusCode: 401,
-      })
-    );
+    return next(new ErrorHandler("Incorrect password. Please try again.", 401));
   }
 
-  let hashedPwd = await hashPassword(newPassword);
+  const hashedPwd = await hashPassword(newPassword);
 
   user.password = hashedPwd;
 
@@ -120,63 +99,56 @@ export const forgotPassword = catchAsyncError(async (req, res, next) => {
 
   if (!user) {
     return next(
-      new errorHandler({
-        message: `We could not find the user with email: ${req.body.email}`,
-        statusCode: 404,
-      })
+      new ErrorHandler(
+        `We could not find the user with email: ${req.body.email}`,
+        404
+      )
     );
   }
 
-  const resetPasswordOTP = generateOTP().code;
+  const { code, expiresAt } = generateOTP();
 
-  user.otp = resetPasswordOTP;
-  user.otpexpire = generateOTP().expiresAt;
+  user.otp = code;
+  user.otpexpire = expiresAt;
 
   await user.save();
 
   res.status(200).json({
     status: "success",
-    OTP: resetPasswordOTP,
+    OTP: code,
   });
 });
 
 export const resetPassword = catchAsyncError(async (req, res, next) => {
-  const { email, otp } = req.body;
+  const { email, otp, newPassword } = req.body;
 
-  const user = await User.findOne({ email: email });
+  const user = await User.findOne({ email });
 
   if (!user) {
     return next(
-      new errorHandler({
-        message: `user with the email: ${email} not exists, try others`,
-        statusCode: 409,
-      })
+      new ErrorHandler(
+        `User with the email: ${email} does not exist, try another.`,
+        409
+      )
     );
   }
 
   if (user.otp !== otp) {
-    return next(
-      new errorHandler({
-        message: `Dear user the otp entered  ${otp} is not correct`,
-        statusCode: 401,
-      })
-    );
+    return next(new ErrorHandler(`The entered OTP: ${otp} is incorrect.`, 401));
   }
-
-  const { otpexpire } = user;
 
   const currentDateTime = new Date();
 
-  if (otpexpire && otpexpire < currentDateTime) {
+  if (user.otpexpire && user.otpexpire < currentDateTime) {
     return next(
-      new errorHandler({
-        message: `The provided otp: ${otp} has been expired, please try again.`,
-        statusCode: 401,
-      })
+      new ErrorHandler(
+        `The provided OTP: ${otp} has expired, please try again.`,
+        401
+      )
     );
   }
 
-  let hashedPwd = await hashPassword(req.body.newPassword);
+  const hashedPwd = await hashPassword(newPassword);
 
   user.password = hashedPwd;
   user.otp = null;
@@ -184,7 +156,7 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
 
   await user.save();
 
-  let token = generateAccessToken({ _id: user._id, email: user.email });
+  const token = generateAccessToken({ _id: user._id, email: user.email });
 
   res.status(200).json({
     message: "Success, password updated!",

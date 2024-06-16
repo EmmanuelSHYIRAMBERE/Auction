@@ -18,12 +18,15 @@ components:
       type: object
       required:
         - username
+        - firstname
         - lastname
         - email
         - password
         - location
       properties:
         username:
+          type: string
+        firstname:
           type: string
         lastname:
           type: string
@@ -35,16 +38,19 @@ components:
         location:
           type: string
       example:
+        firstname: "John"
+        lastname: "Doe"
         username: "john_doe"
-        lastname: "Doe123"
         email: "john.doe@example.com"
-        password: "******************"
         location: "Locat123"
+        password: "******************"
 
     updateUser:
       type: object
       properties:
         username:
+          type: string
+        firstname:
           type: string
         lastname:
           type: string
@@ -57,8 +63,9 @@ components:
           type: string
           format: binary
       example:
+        firstname: "John"
+        lastname: "Doe"
         username: "john_doe"
-        lastname: "Doe123"
         email: "john.doe@example.com"
         location: "Locat123"
         photo: photo.jpg
@@ -66,16 +73,15 @@ components:
     Auth:
       type: object
       required:
-        - email
+        - username
         - password
       properties:
-        email:
+        username:
           type: string
-          format: email
         password:
           type: string
       example:
-        email: "email@example.com"
+        username: "john_doe"
         password: "******************"
 
     ChangePassword:
@@ -120,11 +126,61 @@ components:
         otp: "------"
         newPassword: "******************"
 
+    Contact:
+      type: object
+      required:
+        - firstname
+        - lastname
+        - email
+        - address
+      properties:
+        firstname:
+          type: string
+        lastname:
+          type: string
+        email:
+          type: string
+          format: email
+        address:
+          type: string
+      example:
+        firstname: "Jane"
+        lastname: "Doe"
+        email: "jane.doe@example.com"
+        address: "123 Main St, Anytown, USA"
+
+    Subscription:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+      example:
+        email: "jane.doe@example.com"
+
+    Donation:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+      example:
+        amount: 100
+
 tags:
   - name: userManagement
     description: The user managing API
   - name: authManagement
     description: The auth managing API
+  - name: contactManagement
+    description: The contact managing API
+  - name: subscriptionManagement
+    description: The subscription managing API
+  - name: donationManagement
+    description: The donation managing API
 
 paths:
   /api/v1/users:
@@ -165,6 +221,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Users"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: User not found
+        "500":
+          description: Internal server error
+
+    put:
+      summary: Update a User
+      tags: [userManagement]
+      description: Endpoint to update a User
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/updateUser"
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/updateUser"
         "401":
           description: Unauthorized, authentication error
         "404":
@@ -218,39 +300,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Users"
-        "401":
-          description: Unauthorized, authentication error
-        "404":
-          description: User not found
-        "500":
-          description: Internal server error
-
-    put:
-      summary: Update a User by ID
-      tags: [userManagement]
-      description: Endpoint to update a User by its ID
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-          required: true
-          description: The User id
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: "#/components/schemas/updateUser"
-      responses:
-        "200":
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/updateUser"
         "401":
           description: Unauthorized, authentication error
         "404":
@@ -338,7 +387,7 @@ paths:
 
   /api/v1/auth/resetpassword:
     post:
-      summary: Rest password
+      summary: Reset password
       tags: [authManagement]
       description: Endpoint for user to reset password
       requestBody:
@@ -352,5 +401,416 @@ paths:
           description: Password otp generated successfully
         "404":
           description: User not found
+        "500":
+          description: Internal server error
+
+  /api/v1/contacts:
+    post:
+      summary: Create a new contact
+      tags: [contactManagement]
+      description: Endpoint to create a new contact
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Contact"
+      responses:
+        "201":
+          description: Contact created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized, authentication error
+        "500":
+          description: Internal server error
+
+    get:
+      summary: Get all contacts
+      tags: [contactManagement]
+      description: Endpoint to retrieve all contacts
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Contact"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Contacts not found
+        "500":
+          description: Internal server error
+
+  /api/v1/contacts/{id}:
+    get:
+      summary: Get a contact by ID
+      tags: [contactManagement]
+      description: Endpoint to retrieve a contact by its ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The contact id
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Contact not found
+        "500":
+          description: Internal server error
+
+    put:
+      summary: Update a contact by ID
+      tags: [contactManagement]
+      description: Endpoint to update a contact by its ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The contact id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Contact"
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Contact not found
+        "500":
+          description: Internal server error
+
+    delete:
+      summary: Delete a contact by ID
+      tags: [contactManagement]
+      description: Endpoint to delete a contact by its ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The contact id
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Contact not found
+        "500":
+          description: Internal server error
+
+  /api/v1/subscriptions:
+    post:
+      summary: Create a new subscription
+      tags: [subscriptionManagement]
+      description: Endpoint to create a new subscription
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Subscription"
+      responses:
+        "201":
+          description: Subscription created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized, authentication error
+        "500":
+          description: Internal server error
+
+    get:
+      summary: Get all subscriptions
+      tags: [subscriptionManagement]
+      description: Endpoint to retrieve all subscriptions
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subscription"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Subscriptions not found
+        "500":
+          description: Internal server error
+
+  /api/v1/subscriptions/{id}:
+    get:
+      summary: Get a subscription by ID
+      tags: [subscriptionManagement]
+      description: Endpoint to retrieve a subscription by its ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The subscription id
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Subscription not found
+        "500":
+          description: Internal server error
+
+    put:
+      summary: Update a subscription by ID
+      tags: [subscriptionManagement]
+      description: Endpoint to update a subscription by its ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The subscription id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Subscription"
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Subscription not found
+        "500":
+          description: Internal server error
+
+    delete:
+      summary: Delete a subscription by ID
+      tags: [subscriptionManagement]
+      description: Endpoint to delete a subscription by its ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The subscription id
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Subscription not found
+        "500":
+          description: Internal server error
+
+  /api/v1/donations:
+    post:
+      summary: Create a new donation
+      tags: [donationManagement]
+      description: Endpoint to create a new donation
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Donation"
+      responses:
+        "201":
+          description: Donation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Donation"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized, authentication error
+        "500":
+          description: Internal server error
+
+    get:
+      summary: Get all donations
+      tags: [donationManagement]
+      description: Endpoint to retrieve all donations
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Donation"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Donations not found
+        "500":
+          description: Internal server error
+
+  /api/v1/donations/{id}:
+    get:
+      summary: Get a donation by ID
+      tags: [donationManagement]
+      description: Endpoint to retrieve a donation by its ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The donation id
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Donation"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Donation not found
+        "500":
+          description: Internal server error
+
+    put:
+      summary: Update a donation by ID
+      tags: [donationManagement]
+      description: Endpoint to update a donation by its ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The donation id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Donation"
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Donation"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Donation not found
+        "500":
+          description: Internal server error
+
+    delete:
+      summary: Delete a donation by ID
+      tags: [donationManagement]
+      description: Endpoint to delete a donation by its ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The donation id
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Donation"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Donation not found
         "500":
           description: Internal server error

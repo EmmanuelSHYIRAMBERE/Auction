@@ -19,12 +19,12 @@ export const handleDuplicateFieldsDB = (err) => {
   const value = err.errmsg.match(/(["'])(\\?.)*?\1/)[0];
 
   const message = `Duplicate field value: ${value}`;
-  return new errorHandler({ message, statusCode: 400 });
+  return new errorHandler(message, 400);
 };
 
 export const handCastError = (err) => {
   const message = `Invalid input data ${err.stringValue} because of ${err.reason}`;
-  return new errorHandler({ message, statusCode: 400 });
+  return new errorHandler(message, 400);
 };
 
 export const handleValidationErrorDB = (err) => {
@@ -33,5 +33,5 @@ export const handleValidationErrorDB = (err) => {
   });
 
   const message = errors.join(". ").replace(/\\"/g, '"');
-  return new errorHandler({ message, statusCode: 400 });
+  return new errorHandler(message, 400);
 };
