@@ -3,11 +3,10 @@ import errorHandler, { catchAsyncError } from "../utils/errorhandler.utlity";
 import { hashPassword } from "../utils/password.utility";
 import { usersValidationSchema } from "../validation/data.validation";
 import cloudinary from "../utils/cloudinary.utility";
+import { sendWelcomeEmail } from "../middleware/sendregisteremail.middleware";
 // import { sendWelcomeEmail } from "../middleware";
 
 export const registerUser = catchAsyncError(async (req, res, next) => {
-  console.log("Received request body:", req.body);
-
   const { error } = usersValidationSchema.validate(req.body, {
     abortEarly: false,
   });
@@ -17,8 +16,6 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
     console.log("Validation error:", errorMessage);
     return next(new errorHandler(errorMessage, 400));
   }
-
-  console.log("Validated body:", req.body);
 
   const { email, password, username, firstname, lastname, location, role } =
     req.body;
@@ -50,7 +47,7 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
     role,
   });
 
-  // sendWelcomeEmail(email, lastname);
+  sendWelcomeEmail(email, lastname);
 
   res.status(201).json({
     message: "User registered successfully.",

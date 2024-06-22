@@ -13,6 +13,8 @@ const userSchema = new mongoose.Schema(
     card_id: { type: String, required: false },
     receipt_id: { type: String, required: false },
     role: { type: String, default: "user" },
+    otp: { type: String }, // Field to store OTP
+    otpexpire: { type: Date }, // Field to store OTP expiration time
   },
   {
     timestamps: true,

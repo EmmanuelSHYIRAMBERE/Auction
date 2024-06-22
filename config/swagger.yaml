@@ -135,6 +135,7 @@ components:
         - lastname
         - email
         - address
+        - message
       properties:
         firstname:
           type: string
@@ -145,11 +146,14 @@ components:
           format: email
         address:
           type: string
+        address:
+          type: message
       example:
         firstname: "Jane"
         lastname: "Doe"
         email: "jane.doe@example.com"
         address: "123 Main St, Anytown, USA"
+        message: "Hello ..."
 
     Subscription:
       type: object
@@ -165,11 +169,24 @@ components:
     Donation:
       type: object
       required:
+        - firstname
+        - lastname
+        - email
         - amount
       properties:
+        firstname:
+          type: string
+        lastname:
+          type: string
+        email:
+          type: string
+          format: email
         amount:
           type: number
       example:
+        firstname: "Jane"
+        lastname: "Doe"
+        email: "jane.doe@example.com"
         amount: 100
 
     Payment:

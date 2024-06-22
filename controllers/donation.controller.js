@@ -14,10 +14,6 @@ export const createDonation = catchAsyncError(async (req, res, next) => {
     return next(new errorHandler(`User not found.`, 404));
   }
 
-  req.body.firstname = user.firstname;
-  req.body.lastname = user.lastname;
-  req.body.email = user.email;
-
   const { error } = donationsValidationSchema.validate(req.body, {
     abortEarly: false,
   });

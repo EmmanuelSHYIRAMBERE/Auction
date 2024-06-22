@@ -6,6 +6,7 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/token.utility";
+import { sendOTPEmail } from "../middleware";
 
 export const logIn = catchAsyncError(async (req, res, next) => {
   const { username, password } = req.body;
@@ -113,9 +114,13 @@ export const forgotPassword = catchAsyncError(async (req, res, next) => {
 
   await user.save();
 
+  sendOTPEmail(user.email, code);
+
   res.status(200).json({
     status: "success",
-    OTP: code,
+    message: `An email with a verification code was just sent to ${
+      user.email
+    }. This code will expire at ${expiresAt.toLocaleTimeString()}. Please check your inbox and use the code to reset your password.`,
   });
 });
 

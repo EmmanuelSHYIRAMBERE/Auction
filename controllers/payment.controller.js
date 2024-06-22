@@ -5,6 +5,7 @@ import { paymentsValidationSchema } from "../validation/data.validation";
 import User from "../models/user.model";
 import Donation from "../models/donation.model";
 import Payment from "../models/payment.model";
+import { sendDonationThankYouEmail } from "../middleware";
 
 dotenv.config();
 
@@ -103,6 +104,8 @@ export const createPayment = catchAsyncError(async (req, res, next) => {
     };
 
     const newPayment = await Payment.create(req.body);
+
+    sendDonationThankYouEmail(email, fullNames);
 
     res.status(201).json(newPayment);
   } catch (error) {
