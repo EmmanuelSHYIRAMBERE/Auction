@@ -10,7 +10,7 @@ import { admin, verifyAccessToken } from "../middleware";
 
 const donationRouter = express.Router();
 
-donationRouter.post("/", verifyAccessToken, createDonation);
+donationRouter.post("/", createDonation);
 donationRouter.get("/", verifyAccessToken, admin, getAllDonations);
 donationRouter.get("/:id", verifyAccessToken, getDonationById);
 donationRouter.put("/:id", verifyAccessToken, updateDonation);
