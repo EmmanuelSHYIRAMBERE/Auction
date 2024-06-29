@@ -4,16 +4,6 @@ import errorHandler, { catchAsyncError } from "../utils/errorhandler.utlity";
 import { donationsValidationSchema } from "../validation/data.validation";
 
 export const createDonation = catchAsyncError(async (req, res, next) => {
-  const userId = req.user._id;
-
-  const user = await User.findOne({
-    _id: userId,
-  });
-
-  if (!user) {
-    return next(new errorHandler(`User not found.`, 404));
-  }
-
   const { error } = donationsValidationSchema.validate(req.body, {
     abortEarly: false,
   });

@@ -1,4 +1,25 @@
-<!DOCTYPE html>
+import nodemailer from "nodemailer";
+
+export const sendContactConfirmationEmail = (userEmail, userName) => {
+  let config = {
+    service: "gmail",
+    auth: {
+      user: process.env.googleEmail,
+      pass: process.env.googlePassword,
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+  };
+  let transporter = nodemailer.createTransport(config);
+
+  let message = {
+    from: process.env.googleEmail,
+    to: userEmail,
+    subject: "Confirmation: We Have Received Your Message",
+
+    html: `
+     <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -67,7 +88,7 @@
         <h1>Thank You!</h1>
       </div>
       <div class="content">
-        <p>Dear [User's Name],</p>
+        <p>Dear ${userName},</p>
         <p>
           We have received your message and would like to thank you for
           contacting us. Our team is reviewing your inquiry and will get back to
@@ -86,3 +107,9 @@
     </div>
   </body>
 </html>
+
+`,
+  };
+
+  transporter.sendMail(message);
+};

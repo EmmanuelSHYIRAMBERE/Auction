@@ -13,16 +13,15 @@ const stripe = new Stripe(process.env.stripeSecret);
 
 export const createPayment = catchAsyncError(async (req, res, next) => {
   try {
-    const email = req.user.email;
     const donationId = req.params.id;
 
-    const user = await User.findOne({ email: email });
+    const donation = await Donation.findById(donationId);
 
-    if (!user) {
-      return next(new errorHandler(`User not found`, 404));
+    if (!donation) {
+      return next(new errorHandler(`Donation not found`, 404));
     }
 
-    const { firstname, lastname } = user;
+    const { firstname, lastname, email } = donation;
 
     req.body.firstname = firstname;
     req.body.lastname = lastname;
@@ -35,12 +34,6 @@ export const createPayment = catchAsyncError(async (req, res, next) => {
     if (error) {
       const errorMessage = error.details.map((err) => err.message).join(", ");
       return next(new errorHandler(errorMessage, 400));
-    }
-
-    const donation = await Donation.findById(donationId);
-
-    if (!donation) {
-      return next(new errorHandler(`Donation not found`, 404));
     }
 
     const { amount } = donation;
@@ -79,18 +72,21 @@ export const createPayment = catchAsyncError(async (req, res, next) => {
       customer: customer.id,
     });
 
-    user.customer_id = customer.id;
-    user.card_id = card.id;
-    user.receipt_id = paymentMade.id;
-    user.role = "donator";
+    donation.customer_id = customer.id;
+    donation.card_id = card.id;
+    donation.receipt_id = paymentMade.id;
 
-    await user.save();
+    await donation.save();
+
+    const paymentReceived = await Payment.create(req.body);
+
+    const { _id } = paymentReceived;
 
     const paymentData = {
       success: true,
       paymentMade: {
-        id: paymentMade.id,
-        amount: paymentMade.amount,
+        id: _id,
+        amount: paymentMade.amount / 1000,
         currency: paymentMade.currency,
         payment_method: paymentMade.payment_method_details.type,
         receipt_email: paymentMade.receipt_email,
@@ -103,11 +99,11 @@ export const createPayment = catchAsyncError(async (req, res, next) => {
       },
     };
 
-    const newPayment = await Payment.create(req.body);
+    const fullNames = firstname + " " + lastname;
 
     sendDonationThankYouEmail(email, fullNames);
 
-    res.status(201).json(newPayment);
+    res.status(201).json(paymentData);
   } catch (error) {
     console.error("Error in createPayment:", error);
     res.status(500).json({ success: false, msg: error.message });

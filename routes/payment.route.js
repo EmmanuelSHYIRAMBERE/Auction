@@ -9,7 +9,7 @@ import {
 
 const paymentRouter = express.Router();
 
-paymentRouter.post("/:id", verifyAccessToken, createPayment);
+paymentRouter.post("/:id", createPayment);
 paymentRouter.get("/", verifyAccessToken, admin, getAllPayments);
 paymentRouter.get("/:id", verifyAccessToken, getPaymentById);
 paymentRouter.delete("/:id", verifyAccessToken, deletePayment);

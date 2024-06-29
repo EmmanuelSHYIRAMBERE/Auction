@@ -1,3 +1,4 @@
+import { sendContactConfirmationEmail } from "../middleware";
 import Contact from "../models/contact.model";
 import errorHandler, { catchAsyncError } from "../utils/errorhandler.utlity";
 import { contactsValidationSchema } from "../validation/data.validation";
@@ -12,14 +13,17 @@ export const createContact = catchAsyncError(async (req, res, next) => {
     return next(new errorHandler(errorMessage, 400));
   }
 
-  const { firstname, lastname, email, address } = req.body;
+  const { firstname, lastname, email, address, message } = req.body;
 
   const newContact = await Contact.create({
     firstname,
     lastname,
     email,
     address,
+    message,
   });
+
+  sendContactConfirmationEmail(email, firstname);
 
   res.status(201).json({
     message: "Contact created successfully.",
