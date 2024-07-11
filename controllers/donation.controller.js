@@ -1,5 +1,4 @@
 import Donation from "../models/donation.model";
-import User from "../models/user.model";
 import errorHandler, { catchAsyncError } from "../utils/errorhandler.utlity";
 import { donationsValidationSchema } from "../validation/data.validation";
 

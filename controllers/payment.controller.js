@@ -9,7 +9,7 @@ import { sendDonationThankYouEmail } from "../middleware";
 
 dotenv.config();
 
-const stripe = new Stripe(process.env.stripeSecret);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const createPayment = catchAsyncError(async (req, res, next) => {
   try {
@@ -203,4 +203,54 @@ export const getAllPayments = catchAsyncError(async (req, res, next) => {
     totalPayments: allPayments.length,
     payments: allPayments,
   });
+});
+
+export const PaymentWebhook = catchAsyncError(async (req, res, next) => {
+  const endpointSecret =
+    "whsec_87d4d54043e6830378c08eb5c25ed7fb085d4bb028a6f750997a065b58b457d9";
+
+  const sig = req.headers["stripe-signature"];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret); // Use req.rawBody for raw JSON data
+    console.log("Webhook verified");
+  } catch (err) {
+    console.log(`Webhook Error: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Handle the event based on its type
+  switch (event.type) {
+    case "payment_intent.succeeded":
+      const paymentIntent = event.data.object;
+      // Handle successful payment intent here
+      console.log("PaymentIntent was successful:", paymentIntent);
+      break;
+    // Handle other event types as needed
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
+
+  // Return a 200 response to acknowledge receipt of the event
+  res.status(200).json({ received: true });
+});
+
+export const getAllDonators = catchAsyncError(async (req, res, next) => {
+  const customers = await stripe.customers.list({
+    // Add any necessary parameters here
+  });
+
+  console.log("customers***********", customers);
+
+  if (customers && customers.data.length > 0) {
+    console.log("Success:", JSON.stringify(customers.data, null, 2));
+    // Handle successful retrieval of customers, send them as a response
+    return res.status(200).json(customers.data);
+  } else {
+    console.log("No customers found");
+    // Handle the case where customers array is empty or undefined
+    return res.status(404).json({ message: "No customers found" });
+  }
 });

@@ -2,7 +2,6 @@ import express from "express";
 
 import errorHandler from "../utils/errorhandler.utlity";
 import { globalErrorController } from "../controllers/error.controller";
-import { refreshAccessToken } from "../middleware/tokenverification.middleware";
 import authRouter from "./auth.route";
 import userRouter from "./user.route";
 import contactRouter from "./contact.route";
@@ -16,11 +15,8 @@ apiRouter.use("/auth", authRouter);
 apiRouter.use("/contacts", contactRouter);
 apiRouter.use("/users", userRouter);
 apiRouter.use("/subscriptions", subscriptionRouter);
-
-apiRouter.use(refreshAccessToken);
-
-apiRouter.use("/donations", donationRouter);
 apiRouter.use("/payments", paymentRouter);
+apiRouter.use("/donations", donationRouter);
 
 apiRouter.all("*", (req, res, next) => {
   next(

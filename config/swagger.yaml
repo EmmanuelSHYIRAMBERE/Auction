@@ -732,8 +732,6 @@ paths:
       summary: Create a new donation
       tags: [donationManagement]
       description: Endpoint to create a new donation
-      security:
-        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -972,3 +970,24 @@ paths:
           description: Payment not found
         "500":
           description: Internal server error
+  
+  /api/v1/payments/donators:
+    get:
+      summary: Get all donators
+      tags: [paymentManagement]
+      description: Endpoint to retrieve donators who made payments
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+        "401":
+          description: Unauthorized, authentication error
+        "404":
+          description: Donators not found

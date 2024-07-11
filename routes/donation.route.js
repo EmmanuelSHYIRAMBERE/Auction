@@ -6,11 +6,13 @@ import {
   deleteDonation,
   getAllDonations,
 } from "../controllers/donation.controller";
-import { admin, verifyAccessToken } from "../middleware";
+import { admin, refreshAccessToken, verifyAccessToken } from "../middleware";
 
 const donationRouter = express.Router();
 
 donationRouter.post("/", createDonation);
+
+donationRouter.use(refreshAccessToken);
 donationRouter.get("/", verifyAccessToken, admin, getAllDonations);
 donationRouter.get("/:id", verifyAccessToken, getDonationById);
 donationRouter.put("/:id", verifyAccessToken, updateDonation);
