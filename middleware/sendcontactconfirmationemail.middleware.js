@@ -102,7 +102,7 @@ export const sendContactConfirmationEmail = (userEmail, userName) => {
           connected with you.
         </p>
         <p>Best regards,</p>
-        <p>The Auction Portal Team</p>
+        <p>The SICP Charity Portal Team</p>
       </div>
     </div>
   </body>

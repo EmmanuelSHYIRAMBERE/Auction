@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-export const sendDonationThankYouEmail = (userEmail, userName) => {
+export const sendDonationThankYouEmail = async (userEmail, userFullName) => {
   let config = {
     service: "gmail",
     auth: {
@@ -16,7 +16,7 @@ export const sendDonationThankYouEmail = (userEmail, userName) => {
   let message = {
     from: process.env.googleEmail,
     to: userEmail,
-    subject: "Thank You for Your Donation!",
+    subject: "Thank You for Donation - SICP Charity Portal!",
 
     html: `
      <!DOCTYPE html>
@@ -76,7 +76,7 @@ export const sendDonationThankYouEmail = (userEmail, userName) => {
         <h1>Thank You for Your Donation</h1>
       </div>
       <div class="contents">
-        <p>Dear ${userName ? userName.split(" ")[0] : "there"}!,</p>
+        <p>Hi ${userFullName ? userFullName : ""}!,</p>
         <p>
           We want to express our deepest gratitude for your generous donation. Your support means the world to us and your contribution will make a significant impact to achieve our mission. 
         </p>
@@ -86,7 +86,7 @@ export const sendDonationThankYouEmail = (userEmail, userName) => {
       </div>
       <div class="footer">
         <p>Best regards,</p>
-        <p>The Auction Portal Team</p>
+        <p>The SICP Charity Portal Team</p>
       </div>
     </div>
   </body>
@@ -94,5 +94,5 @@ export const sendDonationThankYouEmail = (userEmail, userName) => {
 `,
   };
 
-  transporter.sendMail(message);
+  await transporter.sendMail(message);
 };

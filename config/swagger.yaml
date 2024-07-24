@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  title: Auction Management API
-  description: API for managing Auction resources
+  title: SICP Charity Portal Management API
+  description: API for managing SICP Charity Portal resources
   version: 1.0.0
 servers:
   - url: "https://auction-website-auji.onrender.com"

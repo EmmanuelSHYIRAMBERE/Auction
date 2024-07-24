@@ -16,7 +16,7 @@ export const sendWelcomeEmail = (userEmail, userFullName) => {
   let message = {
     from: process.env.googleEmail,
     to: userEmail,
-    subject: "Welcome to the Auction Portal! Your Journey Begins",
+    subject: "Welcome to the SICP Charity Portal!",
 
     html: `
      <!DOCTYPE html>
@@ -24,7 +24,7 @@ export const sendWelcomeEmail = (userEmail, userFullName) => {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Welcome to the Auction Portal</title>
+    <title>Welcome to the SICP Charity Portal</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -73,12 +73,12 @@ export const sendWelcomeEmail = (userEmail, userFullName) => {
   <body>
     <div class="outer-container">
       <div class="heading">
-        <h1>Welcome to the Auction Portal</h1>
+        <h1>Welcome to the SICP Charity Portal</h1>
       </div>
       <div class="contents">
         <p>Hi ${userFullName ? userFullName.split(" ")[0] : "there"}!,</p>
         <p>
-          Congratulations on joining the Auction Portal! We're excited to
+          Congratulations on joining the SICP Charity Portal! We're excited to
           welcome you to our vibrant community of auction enthusiasts.
         </p>
         <p>
@@ -96,7 +96,7 @@ export const sendWelcomeEmail = (userEmail, userFullName) => {
       </div>
       <div class="footer">
         <p>Best regards,</p>
-        <p>The Auction Portal Team</p>
+        <p>The SICP Charity Portal Team</p>
       </div>
     </div>
   </body>

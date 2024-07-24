@@ -89,7 +89,7 @@ export const sendOTPEmail = (userEmail, otp) => {
       </div>
       <div class="footer">
         <p>Best regards,</p>
-        <p>The Auction Portal Team</p>
+        <p>The SICP Charity Portal Team</p>
       </div>
     </div>
   </body>

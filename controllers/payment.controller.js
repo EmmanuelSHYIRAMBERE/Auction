@@ -1,4 +1,3 @@
-import Stripe from "stripe";
 import dotenv from "dotenv";
 import errorHandler, { catchAsyncError } from "../utils/errorhandler.utlity";
 import { paymentsValidationSchema } from "../validation/data.validation";
@@ -9,9 +8,131 @@ import { sendDonationThankYouEmail } from "../middleware";
 
 dotenv.config();
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } = process.env;
+const base = "https://api-m.sandbox.paypal.com";
 
-export const createPayment = catchAsyncError(async (req, res, next) => {
+const generateAccessToken = async () => {
+  try {
+    if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+      throw new Error("MISSING_API_CREDENTIALS");
+    }
+    const auth = Buffer.from(
+      `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`
+    ).toString("base64");
+    const response = await fetch(`${base}/v1/oauth2/token`, {
+      method: "POST",
+      body: "grant_type=client_credentials",
+      headers: {
+        Authorization: `Basic ${auth}`,
+      },
+    });
+    const data = await response.json();
+    return data.access_token;
+  } catch (error) {
+    console.error("Failed to generate Access Token:", error);
+  }
+};
+
+const createOrder = async (data) => {
+  try {
+    const accessToken = await generateAccessToken();
+    const url = `${base}/v2/checkout/orders`;
+
+    const { firstname, lastname, email, phone, amount } = data.donation;
+
+    const payload = {
+      intent: "CAPTURE",
+      purchase_units: [
+        {
+          firstname: firstname,
+          lastname: lastname,
+          phone: phone,
+          amount: {
+            currency_code: "USD",
+            value: amount,
+          },
+        },
+      ],
+    };
+
+    const response = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    const jsonResponse = await response.json();
+
+    await Payment.create({
+      ref_id: jsonResponse.id,
+      firstname,
+      lastname,
+      email,
+      phone,
+      amount,
+    });
+
+    return {
+      jsonResponse,
+      httpStatusCode: response.status,
+    };
+  } catch (error) {
+    console.error("Failed to create order:", error);
+    throw error;
+  }
+};
+
+const captureOrder = async (orderID) => {
+  const accessToken = await generateAccessToken();
+  const url = `${base}/v2/checkout/orders/${orderID}/capture`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  return handleResponse(response);
+};
+
+async function handleResponse(response) {
+  try {
+    const jsonResponse = await response.json();
+
+    const { id, status } = jsonResponse;
+
+    const payment = await Payment.findOne({ ref_id: id });
+
+    if (!payment) {
+      return next(new errorHandler(`Payment not found`, 404));
+    }
+
+    const { firstname, lastname, email, phone, amount } = payment;
+
+    if (status === "COMPLETED") {
+      payment.status = "Succeed";
+      await payment.save();
+
+      sendDonationThankYouEmail(email, firstname + " " + lastname);
+    }
+
+    return {
+      jsonResponse,
+      httpStatusCode: response.status,
+    };
+  } catch (err) {
+    console.log("Failed to parse response body as JSON:", err);
+    const errorMessage = await response.text();
+    throw new Error(errorMessage);
+  }
+}
+
+export const createDonationPayment = catchAsyncError(async (req, res, next) => {
   try {
     const donationId = req.params.id;
 
@@ -21,94 +142,29 @@ export const createPayment = catchAsyncError(async (req, res, next) => {
       return next(new errorHandler(`Donation not found`, 404));
     }
 
-    const { firstname, lastname, email } = donation;
-
-    req.body.firstname = firstname;
-    req.body.lastname = lastname;
-    req.body.email = email;
-
-    const { error } = paymentsValidationSchema.validate(req.body, {
-      abortEarly: false,
-    });
-
-    if (error) {
-      const errorMessage = error.details.map((err) => err.message).join(", ");
-      return next(new errorHandler(errorMessage, 400));
+    const { jsonResponse, httpStatusCode } = await createOrder({ donation });
+    if (httpStatusCode !== 201) {
+      throw new Error(`Failed to create order. Status code: ${httpStatusCode}`);
     }
-
-    const { amount } = donation;
-
-    const customer = await stripe.customers.create({
-      email: email,
-      name: firstname + " " + lastname,
-    });
-
-    req.body.firstname = firstname;
-    req.body.lastname = lastname;
-
-    const { card_Name, card_ExpYear, card_ExpMonth, card_CVC, card_Number } =
-      req.body;
-
-    const card_token = await stripe.tokens.create({
-      card: {
-        name: card_Name,
-        exp_year: card_ExpYear,
-        exp_month: card_ExpMonth,
-        cvc: card_CVC,
-        number: card_Number,
-      },
-    });
-
-    // Use the test token to add a card to the customer
-    const card = await stripe.customers.createSource(customer.id, {
-      source: card_token.id,
-    });
-
-    const paymentMade = await stripe.charges.create({
-      receipt_email: email,
-      amount: parseInt(Math.round(amount)) * 1000,
-      currency: "RWF",
-      card: card.id,
-      customer: customer.id,
-    });
-
-    donation.customer_id = customer.id;
-    donation.card_id = card.id;
-    donation.receipt_id = paymentMade.id;
-
-    await donation.save();
-
-    const paymentReceived = await Payment.create(req.body);
-
-    const { _id } = paymentReceived;
-
-    const paymentData = {
-      success: true,
-      paymentMade: {
-        id: _id,
-        amount: paymentMade.amount / 1000,
-        currency: paymentMade.currency,
-        payment_method: paymentMade.payment_method_details.type,
-        receipt_email: paymentMade.receipt_email,
-        receipt_url: paymentMade.receipt_url,
-        status: paymentMade.status,
-      },
-      user: {
-        email: email,
-        fullNames: firstname + " " + lastname,
-      },
-    };
-
-    const fullNames = firstname + " " + lastname;
-
-    sendDonationThankYouEmail(email, fullNames);
-
-    res.status(201).json(paymentData);
+    res.status(httpStatusCode).json(jsonResponse);
   } catch (error) {
-    console.error("Error in createPayment:", error);
-    res.status(500).json({ success: false, msg: error.message });
+    console.error("Failed to create order:", error);
+    res.status(500).json({ error: "Failed to create order." });
   }
 });
+
+export const captureDonationPayment = catchAsyncError(
+  async (req, res, next) => {
+    try {
+      const { orderID } = req.body;
+      const { jsonResponse, httpStatusCode } = await captureOrder(orderID);
+      res.status(httpStatusCode).json(jsonResponse);
+    } catch (error) {
+      console.error("Failed to capture order:", error);
+      res.status(500).json({ error: "Failed to capture order." });
+    }
+  }
+);
 
 export const getPaymentById = catchAsyncError(async (req, res, next) => {
   const paymentId = req.params.id;
@@ -203,54 +259,4 @@ export const getAllPayments = catchAsyncError(async (req, res, next) => {
     totalPayments: allPayments.length,
     payments: allPayments,
   });
-});
-
-export const PaymentWebhook = catchAsyncError(async (req, res, next) => {
-  const endpointSecret =
-    "whsec_87d4d54043e6830378c08eb5c25ed7fb085d4bb028a6f750997a065b58b457d9";
-
-  const sig = req.headers["stripe-signature"];
-
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret); // Use req.rawBody for raw JSON data
-    console.log("Webhook verified");
-  } catch (err) {
-    console.log(`Webhook Error: ${err.message}`);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  // Handle the event based on its type
-  switch (event.type) {
-    case "payment_intent.succeeded":
-      const paymentIntent = event.data.object;
-      // Handle successful payment intent here
-      console.log("PaymentIntent was successful:", paymentIntent);
-      break;
-    // Handle other event types as needed
-    default:
-      console.log(`Unhandled event type ${event.type}`);
-  }
-
-  // Return a 200 response to acknowledge receipt of the event
-  res.status(200).json({ received: true });
-});
-
-export const getAllDonators = catchAsyncError(async (req, res, next) => {
-  const customers = await stripe.customers.list({
-    // Add any necessary parameters here
-  });
-
-  console.log("customers***********", customers);
-
-  if (customers && customers.data.length > 0) {
-    console.log("Success:", JSON.stringify(customers.data, null, 2));
-    // Handle successful retrieval of customers, send them as a response
-    return res.status(200).json(customers.data);
-  } else {
-    console.log("No customers found");
-    // Handle the case where customers array is empty or undefined
-    return res.status(404).json({ message: "No customers found" });
-  }
 });
