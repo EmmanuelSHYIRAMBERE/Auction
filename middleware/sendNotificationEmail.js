@@ -1,7 +1,13 @@
 import nodemailer from "nodemailer";
 
-export const sendContactConfirmationEmail = (userEmail, userName) => {
-  let config = {
+export const sendNotificationEmail = (
+  userEmail,
+  userName,
+  messageSubject,
+  messageReceived,
+  platformEmail
+) => {
+  const config = {
     service: "gmail",
     auth: {
       user: process.env.googleEmail,
@@ -11,20 +17,21 @@ export const sendContactConfirmationEmail = (userEmail, userName) => {
       rejectUnauthorized: false,
     },
   };
-  let transporter = nodemailer.createTransport(config);
 
-  let message = {
+  const transporter = nodemailer.createTransport(config);
+
+  const message = {
     from: process.env.googleEmail,
-    to: userEmail,
-    subject: "Confirmation: We Have Received Your Message",
-
+    to: platformEmail,
+    subject: messageSubject || "New Contact Us Message Received",
+    replyTo: userEmail,
     html: `
      <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Message Received</title>
+    <title>NEW MESSAGE FROM USER</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -85,30 +92,29 @@ export const sendContactConfirmationEmail = (userEmail, userName) => {
   <body>
     <div class="email-container">
       <div class="header">
-        <h1>Thank You!</h1>
+        <h1>NEW MESSAGE FROM ${userName}</h1>
       </div>
       <div class="content">
-        <p>Dear ${userName},</p>
-        <p>
-          We have received your message and would like to thank you for
-          contacting us. Our team is reviewing your inquiry and will get back to
-          you as soon as possible. Your patience is appreciated.
-        </p>
+        <p><strong>User Email:</strong> ${userEmail}</p>
+        <p><strong>Subject:</strong> ${messageSubject}</p>
+        <p><strong>Message:</strong></p>
+        <p>${messageReceived}</p>
       </div>
       <div class="footer">
-        <p>
-          Should you have any questions or want to learn more, feel free to reach out to us. We look forward to staying
-          connected with you.
-        </p>
         <p>Best regards,</p>
         <p>The SICP Charity Portal Team</p>
       </div>
     </div>
   </body>
 </html>
-
 `,
   };
 
-  transporter.sendMail(message);
+  transporter.sendMail(message, (error, info) => {
+    if (error) {
+      console.error("Error sending email:", error);
+    } else {
+      console.log("Email sent:", info.response);
+    }
+  });
 };

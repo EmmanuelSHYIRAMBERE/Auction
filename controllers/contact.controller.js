@@ -1,4 +1,5 @@
 import { sendContactConfirmationEmail } from "../middleware";
+import { sendNotificationEmail } from "../middleware/sendNotificationEmail";
 import Contact from "../models/contact.model";
 import errorHandler, { catchAsyncError } from "../utils/errorhandler.utlity";
 import { contactsValidationSchema } from "../validation/data.validation";
@@ -24,6 +25,16 @@ export const createContact = catchAsyncError(async (req, res, next) => {
   });
 
   sendContactConfirmationEmail(email, firstname);
+
+  // Send a notification email to the platform
+  const subject = "New Contact Us Message Received";
+  sendNotificationEmail(
+    email,
+    `${firstname} ${lastname}`,
+    subject,
+    message,
+    process.env.PLATFORM_EMAIL
+  );
 
   res.status(201).json({
     message: "Contact created successfully.",

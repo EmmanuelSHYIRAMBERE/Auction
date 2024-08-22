@@ -81,8 +81,8 @@ export const sendDonationThankYouEmail = async (userEmail, userFullName) => {
           We want to express our deepest gratitude for your generous donation. Your support means the world to us and your contribution will make a significant impact to achieve our mission. 
         </p>
         <p>
-          If you have any questions or would like to learn more about our projects, feel free to reach out to us. We look forward to staying connected with you.
-        </p>
+ Should you have any questions or want to learn more, feel free to reach out to us. We look forward to staying
+          connected with you.        </p>
       </div>
       <div class="footer">
         <p>Best regards,</p>

@@ -5,10 +5,11 @@ import User from "../models/user.model";
 import Donation from "../models/donation.model";
 import Payment from "../models/payment.model";
 import { sendDonationThankYouEmail } from "../middleware";
+import { sendNotificationEmail } from "../middleware/sendNotificationEmail";
 
 dotenv.config();
 
-const { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } = process.env;
+const { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PLATFORM_EMAIL } = process.env;
 const base = "https://api-m.sandbox.paypal.com";
 
 const generateAccessToken = async () => {
@@ -112,13 +113,23 @@ async function handleResponse(response) {
       return next(new errorHandler(`Payment not found`, 404));
     }
 
-    const { firstname, lastname, email, phone, amount } = payment;
+    const { firstname, lastname, email, amount } = payment;
 
     if (status === "COMPLETED") {
       payment.status = "Succeed";
       await payment.save();
 
       sendDonationThankYouEmail(email, firstname + " " + lastname);
+
+      // Send notification email to the platform
+      const subject = "New Donation Payment Completed";
+      sendNotificationEmail(
+        email,
+        `${firstname} ${lastname}`,
+        subject,
+        `A new donation of ${amount} amount has been successfully completed.`,
+        PLATFORM_EMAIL
+      );
     }
 
     return {
