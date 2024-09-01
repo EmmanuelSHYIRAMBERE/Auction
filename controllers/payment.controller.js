@@ -122,14 +122,10 @@ async function handleResponse(response) {
       sendDonationThankYouEmail(email, firstname + " " + lastname);
 
       // Send notification email to the platform
-      const subject = "New Donation Payment Completed";
-      sendNotificationEmail(
-        email,
-        `${firstname} ${lastname}`,
-        subject,
-        `A new donation of ${amount} amount has been successfully completed.`,
-        PLATFORM_EMAIL
-      );
+      const subject = "New Donation Payment Completed!";
+      const message = `A new donation of ${amount} amount from ${firstname} ${lastname} with email ${email}  has been successfully completed.`;
+
+      sendNotificationEmail(subject, message);
     }
 
     return {

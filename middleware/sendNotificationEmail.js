@@ -1,12 +1,6 @@
 import nodemailer from "nodemailer";
 
-export const sendNotificationEmail = (
-  userEmail,
-  userName,
-  messageSubject,
-  messageReceived,
-  platformEmail
-) => {
+export const sendNotificationEmail = (messageSubject, messageReceived) => {
   const config = {
     service: "gmail",
     auth: {
@@ -22,16 +16,16 @@ export const sendNotificationEmail = (
 
   const message = {
     from: process.env.googleEmail,
-    to: platformEmail,
-    subject: messageSubject || "New Contact Us Message Received",
-    replyTo: userEmail,
+    to: process.env.RECEIVER_EMAIL,
+    subject: messageSubject,
+    replyTo: process.env.googleEmail,
     html: `
      <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NEW MESSAGE FROM USER</title>
+    <title>${messageSubject}</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -49,12 +43,6 @@ export const sendNotificationEmail = (
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         overflow: hidden;
       }
-      .header {
-        background-color: #007bff;
-        color: #fff;
-        padding: 20px;
-        text-align: center;
-      }
       .content {
         padding: 20px;
       }
@@ -68,42 +56,11 @@ export const sendNotificationEmail = (
         line-height: 1.5;
         margin-bottom: 20px;
       }
-      .footer {
-        text-align: center;
-        padding: 20px;
-        font-size: 12px;
-        color: #777;
-      }
-      .button {
-        display: inline-block;
-        margin-top: 20px;
-        padding: 10px 20px;
-        background-color: #007bff;
-        color: #fff;
-        text-decoration: none;
-        border-radius: 4px;
-        transition: background-color 0.3s ease;
-      }
-      .button:hover {
-        background-color: #0056b3;
-      }
     </style>
   </head>
   <body>
     <div class="email-container">
-      <div class="header">
-        <h1>NEW MESSAGE FROM ${userName}</h1>
-      </div>
-      <div class="content">
-        <p><strong>User Email:</strong> ${userEmail}</p>
-        <p><strong>Subject:</strong> ${messageSubject}</p>
-        <p><strong>Message:</strong></p>
-        <p>${messageReceived}</p>
-      </div>
-      <div class="footer">
-        <p>Best regards,</p>
-        <p>The SICP Charity Portal Team</p>
-      </div>
+     <p> ${messageReceived}</p>
     </div>
   </body>
 </html>
