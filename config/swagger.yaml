@@ -134,7 +134,7 @@ components:
         - firstname
         - lastname
         - email
-        - address
+        - subject
         - message
       properties:
         firstname:
@@ -144,15 +144,15 @@ components:
         email:
           type: string
           format: email
-        address:
+        subject:
           type: string
-        address:
+        message:
           type: message
       example:
         firstname: "Jane"
         lastname: "Doe"
         email: "jane.doe@example.com"
-        address: "123 Main St, Anytown, USA"
+        subject: "Test Email"
         message: "Hello ..."
 
     Subscription:
@@ -970,7 +970,7 @@ paths:
           description: Payment not found
         "500":
           description: Internal server error
-  
+
   /api/v1/payments/donators:
     get:
       summary: Get all donators

@@ -15,7 +15,7 @@ export const contactsValidationSchema = Joi.object({
   firstname: Joi.string().required(),
   lastname: Joi.string().required(),
   email: Joi.string().email().required(),
-  address: Joi.string().required(),
+  subject: Joi.string().required(),
   message: Joi.string().required(),
 });
 

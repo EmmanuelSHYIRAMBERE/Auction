@@ -1,6 +1,11 @@
 import nodemailer from "nodemailer";
 
-export const sendContactConfirmationEmail = (userEmail, userName) => {
+export const sendContactConfirmationEmail = (
+  userEmail,
+  userName,
+  userSubject,
+  userMessage
+) => {
   let config = {
     service: "gmail",
     auth: {
@@ -14,9 +19,10 @@ export const sendContactConfirmationEmail = (userEmail, userName) => {
   let transporter = nodemailer.createTransport(config);
 
   let message = {
-    from: process.env.googleEmail,
-    to: userEmail,
-    subject: "Confirmation: We Have Received Your Message",
+    from: userEmail,
+    to: process.env.RECEIVER_EMAIL,
+    subject: userName.split(" ")[0].toUpperCase() + " - " + userSubject,
+    replyTo: userEmail,
 
     html: `
      <!DOCTYPE html>
@@ -24,7 +30,7 @@ export const sendContactConfirmationEmail = (userEmail, userName) => {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Message Received</title>
+    <title>${userSubject}</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -42,66 +48,20 @@ export const sendContactConfirmationEmail = (userEmail, userName) => {
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         overflow: hidden;
       }
-      .header {
-        background-color: #007bff;
-        color: #fff;
-        padding: 20px;
-        text-align: center;
-      }
       .content {
         padding: 20px;
-      }
-      .content h1 {
-        font-size: 24px;
-        margin-bottom: 20px;
-        color: #007bff;
       }
       .content p {
         font-size: 16px;
         line-height: 1.5;
         margin-bottom: 20px;
       }
-      .footer {
-        text-align: center;
-        padding: 20px;
-        font-size: 12px;
-        color: #777;
-      }
-      .button {
-        display: inline-block;
-        margin-top: 20px;
-        padding: 10px 20px;
-        background-color: #007bff;
-        color: #fff;
-        text-decoration: none;
-        border-radius: 4px;
-        transition: background-color 0.3s ease;
-      }
-      .button:hover {
-        background-color: #0056b3;
-      }
     </style>
   </head>
   <body>
     <div class="email-container">
-      <div class="header">
-        <h1>Thank You!</h1>
-      </div>
       <div class="content">
-        <p>Dear ${userName},</p>
-        <p>
-          We have received your message and would like to thank you for
-          contacting us. Our team is reviewing your inquiry and will get back to
-          you as soon as possible. Your patience is appreciated.
-        </p>
-      </div>
-      <div class="footer">
-        <p>
-          Should you have any questions or want to learn more, feel free to reach out to us. We look forward to staying
-          connected with you.
-        </p>
-        <p>Best regards,</p>
-        <p>The SICP Charity Portal Team</p>
+        <p> ${userMessage}</p>
       </div>
     </div>
   </body>
