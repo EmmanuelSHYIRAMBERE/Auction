@@ -19,9 +19,9 @@ export const sendContactConfirmationEmail = (
   let transporter = nodemailer.createTransport(config);
 
   let message = {
-    from: userEmail,
+    from: `"${userName} <${userEmail}>" <${process.env.googleEmail}>`,
     to: process.env.RECEIVER_EMAIL,
-    subject: userName.split(" ")[0].toUpperCase() + " - " + userSubject,
+    subject: userSubject,
     replyTo: userEmail,
 
     html: `
