@@ -595,8 +595,6 @@ paths:
       summary: Create a new subscription
       tags: [subscriptionManagement]
       description: Endpoint to create a new subscription
-      security:
-        - BearerAuth: []
       requestBody:
         required: true
         content:

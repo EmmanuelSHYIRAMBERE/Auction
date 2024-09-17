@@ -5,3 +5,4 @@ export * from "./sendregisteremail.middleware";
 export * from "./sendotpemail.middleware";
 export * from "./sendDonationThankYouEmail.middleware";
 export * from "./sendcontactconfirmationemail.middleware";
+export * from "./sendnewsubscriptionemail.middleware";

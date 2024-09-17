@@ -1,3 +1,4 @@
+import { sendNewSubscriptionEmail } from "../middleware";
 import Subscribe from "../models/subscription.model";
 import User from "../models/user.model";
 import errorHandler, { catchAsyncError } from "../utils/errorhandler.utlity";
@@ -13,7 +14,15 @@ export const createSubscription = catchAsyncError(async (req, res, next) => {
     return next(new errorHandler(errorMessage, 400));
   }
 
+  const userSubscribed = await Subscribe.findOne({ email: req.body.email });
+
+  if (userSubscribed) {
+    return next(new errorHandler("User already subscribed", 400));
+  }
+
   const newSubscription = await Subscribe.create(req.body);
+
+  sendNewSubscriptionEmail(req.body.email);
 
   res.status(201).json({
     message: "Subscription created successfully.",
